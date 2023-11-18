@@ -40,7 +40,8 @@ drop_zone.addEventListener("drop", dropHandler);
 drop_zone.addEventListener("dragover", dragOverHandler);
 
 let clock = new THREE.Clock();
-let renderer = new THREE.WebGLRenderer();
+let renderer = new THREE.WebGLRenderer({ antialias : true});
+renderer.domElement.classList.add("canvas");
 let camera = new THREE.PerspectiveCamera(45, 1.0, 0.01, 100.0);
 let scene = new THREE.Scene();
 let loader = new GLTFLoader();
@@ -61,8 +62,8 @@ console.log("GLTF Viewer");
 function animate()
 {
     requestAnimationFrame(animate);
-    camera.aspect = renderer.domElement.clientWidth / renderer.domElement.clientHeight;
-    renderer.setSize(renderer.domElement.clientWidth, renderer.domElement.clientHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(camera.aspect);
     camera.updateProjectionMatrix();
     let dt = 
