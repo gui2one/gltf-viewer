@@ -3,6 +3,14 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 const drop_zone = document.querySelector("#drop-zone") as HTMLDivElement;
 
+let scene : THREE.Scene;
+let camera : THREE.PerspectiveCamera;
+let renderer : THREE.WebGLRenderer;
+let loader : GLTFLoader;
+let controls : OrbitControls;
+let clock : THREE.Clock;
+let obj : THREE.Object3D;
+
 function dropHandler(e: DragEvent) {
     e.preventDefault();
 
@@ -17,8 +25,28 @@ function dropHandler(e: DragEvent) {
                 let buffer = load_file_event.target?.result as ArrayBuffer;
                 console.log(buffer);
                 loader.parse(buffer, "/", (data)=>{
-                    console.log(data);
-                    scene.add(data.scene.children[0]);
+                    obj = data.scene.children[0];
+                    obj.receiveShadow = true;
+                    scene.add(obj);
+
+                    let bounds = new THREE.Box3().setFromObject(obj);
+                    let size_x = bounds.max.x - bounds.min.x;
+                    let size_y = bounds.max.y - bounds.min.y;
+                    let size_z = bounds.max.z - bounds.min.z;
+                    let max_size = Math.max(size_x, Math.max(size_y, size_z));
+
+                    obj.scale.set(1.0/max_size, 1.0/max_size, 1.0/max_size);
+                    // console.log(bounds);
+                    // console.log(max_size);
+
+                    obj.traverse( (child : THREE.Object3D)=>{
+                        child.receiveShadow = true;
+                        child.castShadow = true;
+                    })
+                    controls.minDistance = 0.02;
+                    controls.maxDistance = 2.0;
+
+                    camera.position.setZ(2.0);
                 })
 
             }
@@ -39,22 +67,46 @@ function dragOverHandler(ev) {
 drop_zone.addEventListener("drop", dropHandler);
 drop_zone.addEventListener("dragover", dragOverHandler);
 
-let clock = new THREE.Clock();
-let renderer = new THREE.WebGLRenderer({ antialias : true});
+clock = new THREE.Clock(true);
+renderer = new THREE.WebGLRenderer({ antialias : true, alpha : true});
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.domElement.classList.add("canvas");
-let camera = new THREE.PerspectiveCamera(45, 1.0, 0.01, 100.0);
-let scene = new THREE.Scene();
-let loader = new GLTFLoader();
-let light1 = new THREE.DirectionalLight();
-light1.position.setX(1);
-light1.position.setY(1);
+
+camera = new THREE.PerspectiveCamera(45, 1.0, 0.01, 100.0);
+camera.position.set(0,0,5.0);
+
+scene = new THREE.Scene();
+
+loader = new GLTFLoader();
+let light1 = new THREE.DirectionalLight("lightred");
+light1.position.setX(2);
+light1.position.setY(2);
+light1.position.setZ(2);
 light1.lookAt(new THREE.Vector3(0,0,0))
+light1.castShadow = true;
+light1.shadow.mapSize.width = 1024;
+light1.shadow.mapSize.height = 1024;
+light1.shadow.camera.near = 0.01;
+light1.shadow.camera.far = 3.0;
 scene.add(light1);
-let controls = new OrbitControls(camera, renderer.domElement);
+let light2 = new THREE.DirectionalLight("lightblue");
+light2.position.setX(-1);
+light2.position.setY(-1);
+light2.position.setZ(-1);
+light2.intensity = 0.5;
+
+light2.lookAt(new THREE.Vector3(0,0,0))
+scene.add(light2);
+
+let sky_light = new THREE.HemisphereLight();
+sky_light.intensity = 0.5;
+scene.add(sky_light);
+controls = new OrbitControls(camera, renderer.domElement);
 controls.enabled = true;
-controls.autoRotate = true;
+controls.autoRotate = false;
 controls.minDistance = 0.02;
 controls.maxDistance = 1.0;
+controls.minAzimuthAngle = Math.PI / 6.0;
 
 document.body.appendChild(renderer.domElement);
 console.log("GLTF Viewer");
@@ -63,11 +115,13 @@ function animate()
 {
     requestAnimationFrame(animate);
     camera.aspect = window.innerWidth / window.innerHeight;
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(camera.aspect);
     camera.updateProjectionMatrix();
-    let dt = 
-    controls.update();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    // renderer.setPixelRatio(camera.aspect);
+    
+    let dt = clock.getDelta();
+    controls.update(dt);
+    obj.rotation.y += dt * 0.2;
 
     renderer.render(scene, camera);
 
