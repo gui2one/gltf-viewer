@@ -1,0 +1,23 @@
+{
+  "name": "gltf-viewer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node ./browser-build.js && copyfiles ./public/*.html ./public/*.css ./dist --flat",
+    "serve": "esbuild --serve src/index.html"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@chialab/esbuild-plugin-html": "^0.17.3",
+    "three": "^0.158.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.158.2",
+    "copyfiles": "^2.4.1",
+    "esbuild": "^0.19.5"
+  }
+}
