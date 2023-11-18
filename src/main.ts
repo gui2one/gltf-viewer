@@ -23,17 +23,16 @@ function dropHandler(e: DragEvent) {
             let reader = new FileReader();
             reader.onload = function (load_file_event) {
                 let buffer = load_file_event.target?.result as ArrayBuffer;
-                console.log(buffer);
+                // console.log(buffer);
                 loader.parse(buffer, "/", (data)=>{
                     obj = data.scene.children[0];
-                    obj.receiveShadow = true;
-                    scene.add(obj);
-
                     let bounds = new THREE.Box3().setFromObject(obj);
                     let size_x = bounds.max.x - bounds.min.x;
                     let size_y = bounds.max.y - bounds.min.y;
                     let size_z = bounds.max.z - bounds.min.z;
                     let max_size = Math.max(size_x, Math.max(size_y, size_z));
+                    obj.receiveShadow = true;
+
 
                     obj.scale.set(1.0/max_size, 1.0/max_size, 1.0/max_size);
                     // console.log(bounds);
@@ -43,6 +42,10 @@ function dropHandler(e: DragEvent) {
                         child.receiveShadow = true;
                         child.castShadow = true;
                     })
+
+                    scene.add(obj);
+                    console.log(obj);
+                    
                     controls.minDistance = 0.02;
                     controls.maxDistance = 2.0;
 
@@ -69,8 +72,11 @@ drop_zone.addEventListener("dragover", dragOverHandler);
 
 clock = new THREE.Clock(true);
 renderer = new THREE.WebGLRenderer({ antialias : true, alpha : true});
+
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.domElement.classList.add("canvas");
+renderer.shadowMap.enabled = true;
+// renderer.shadowMap.type = THREE.PCFShadowMap;
 
 camera = new THREE.PerspectiveCamera(45, 1.0, 0.01, 100.0);
 camera.position.set(0,0,5.0);
@@ -78,28 +84,36 @@ camera.position.set(0,0,5.0);
 scene = new THREE.Scene();
 
 loader = new GLTFLoader();
-let light1 = new THREE.DirectionalLight("lightred");
+let light1 = new THREE.DirectionalLight();
 light1.position.setX(2);
 light1.position.setY(2);
 light1.position.setZ(2);
-light1.lookAt(new THREE.Vector3(0,0,0))
+light1.lookAt(new THREE.Vector3(0,0,0));
+light1.intensity = 1.0;
 light1.castShadow = true;
 light1.shadow.mapSize.width = 1024;
 light1.shadow.mapSize.height = 1024;
-light1.shadow.camera.near = 0.01;
-light1.shadow.camera.far = 3.0;
+light1.shadow.camera.top = 1.0;
+light1.shadow.camera.bottom = -1.0;
+light1.shadow.camera.left = -1.0;
+light1.shadow.camera.right = 1.0;
+light1.shadow.camera.near = 0.1;
+light1.shadow.camera.far = 30.0;
+// light1.shadow.bias = 0.0001;
+light1.shadow.normalBias = 0.0001;
+light1.shadow.radius = 3.0;
 scene.add(light1);
 let light2 = new THREE.DirectionalLight("lightblue");
 light2.position.setX(-1);
 light2.position.setY(-1);
 light2.position.setZ(-1);
-light2.intensity = 0.5;
+light2.intensity = 0.6;
 
 light2.lookAt(new THREE.Vector3(0,0,0))
 scene.add(light2);
 
 let sky_light = new THREE.HemisphereLight();
-sky_light.intensity = 0.5;
+sky_light.intensity = 0.3;
 scene.add(sky_light);
 controls = new OrbitControls(camera, renderer.domElement);
 controls.enabled = true;
@@ -121,7 +135,11 @@ function animate()
     
     let dt = clock.getDelta();
     controls.update(dt);
-    obj.rotation.y += dt * 0.2;
+
+    if(obj){
+
+        obj.rotation.y += dt * 0.2;
+    }
 
     renderer.render(scene, camera);
 
