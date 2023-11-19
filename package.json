@@ -17,9 +17,9 @@
   },
   "devDependencies": {
     "@types/three": "^0.158.2",
+    "basic-ftp": "^5.0.3",
     "copyfiles": "^2.4.1",
     "dotenv": "^16.3.1",
-    "esbuild": "^0.19.5",
-    "ftp-simple": "^0.3.2"
+    "esbuild": "^0.19.5"
   }
 }
