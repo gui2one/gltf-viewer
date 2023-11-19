@@ -13,6 +13,10 @@ if( do_delete){
     example();
 }
 
+function warning_colors(msg)
+{
+    return `\x1b[33m${msg}\x1b[0m`;
+}
 async function confirmDelete(msg)
 {
     const rl = readline.createInterface({
@@ -20,7 +24,7 @@ async function confirmDelete(msg)
         output: process.stdout,
     });    
     return new Promise((resolve)=>{
-        rl.question(`\x1b[33m${msg}\x1b[0m`, ans=>{
+        rl.question(warning_colors(msg), ans=>{
             rl.close();
             if( ans !== "y") {
                 console.warn("aborting ... ")
