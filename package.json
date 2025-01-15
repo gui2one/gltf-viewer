@@ -4,16 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "node ./browser-build.js && copyfiles ./public/*.html ./public/*.css ./dist --flat",
-    "serve": "esbuild --serve src/index.html",
-    "upload" : "node ./deploy/deployV2.mjs"
+    "build": "vite build",
+    "dev": "vite",
+    "upload": "node ./deploy/deployV2.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@chialab/esbuild-plugin-html": "^0.17.3",
     "three": "^0.158.0"
   },
   "devDependencies": {
@@ -21,6 +19,7 @@
     "basic-ftp": "^5.0.3",
     "copyfiles": "^2.4.1",
     "dotenv": "^16.3.1",
-    "esbuild": "^0.19.5"
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7"
   }
 }
