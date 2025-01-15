@@ -1,8 +1,7 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import * as mikktspace from 'three/examples/jsm/libs/mikktspace.module.js';
+
 const drop_zone = document.querySelector("#drop-zone") as HTMLDivElement;
 
 let scene : THREE.Scene;
@@ -12,6 +11,49 @@ let loader : GLTFLoader;
 let controls : OrbitControls;
 let clock : THREE.Clock;
 let obj : THREE.Object3D;
+
+function init_gltf_data(data : GLTF) : THREE.Object3D {
+
+    obj = data.scene.children[0];
+    let bounds = new THREE.Box3().setFromObject(obj);
+    let size_x = bounds.max.x - bounds.min.x;
+    let size_y = bounds.max.y - bounds.min.y;
+    let size_z = bounds.max.z - bounds.min.z;
+    let max_size = Math.max(size_x, Math.max(size_y, size_z));
+    obj.receiveShadow = true;
+    
+
+
+    obj.scale.set(1.0/max_size, 1.0/max_size, 1.0/max_size);
+    // console.log(bounds);
+    // console.log(max_size);
+
+    obj.traverse( (child : THREE.Object3D)=>{
+        child.receiveShadow = true;
+        child.castShadow = true;
+        if(child instanceof THREE.Mesh){
+            // BufferGeometryUtils.computeMikkTSpaceTangents(child.geometry, mikktspace, false);
+            console.log("computing Tangents for " + child.name);
+            if (child.material.normalMap) {
+                child.geometry.computeVertexNormals();
+                child.geometry.computeTangents();
+                child.geometry.needsUpdate = true;
+
+                (child.material.normalMap as THREE.Texture).wrapS = THREE.RepeatWrapping;
+                (child.material.normalMap as THREE.Texture).wrapT = THREE.RepeatWrapping;
+                (child.material.normalMap as THREE.Texture).repeat.set(2.0, 2.0);
+                // (child.material.normalMap as THREE.Texture).flipY = true;
+                child.material.normalScale.set(0.1, 0.1);
+                child.material.normalMap.colorSpace = THREE.SRGBColorSpace; // Ensure correct encoding
+                child.material.normalMap.needsUpdate = true;
+
+                // child.material.normalMap.height = 0.01;
+            }
+            child.material.needsUpdate = true;
+        }
+    });
+    return obj;
+}
 
 function dropHandler(e: DragEvent) {
     e.preventDefault();
@@ -27,44 +69,47 @@ function dropHandler(e: DragEvent) {
                 let buffer = load_file_event.target?.result as ArrayBuffer;
                 // console.log(buffer);
                 loader.parse(buffer, "/", (data)=>{
-                    obj = data.scene.children[0];
-                    let bounds = new THREE.Box3().setFromObject(obj);
-                    let size_x = bounds.max.x - bounds.min.x;
-                    let size_y = bounds.max.y - bounds.min.y;
-                    let size_z = bounds.max.z - bounds.min.z;
-                    let max_size = Math.max(size_x, Math.max(size_y, size_z));
-                    obj.receiveShadow = true;
+                    // obj = data.scene.children[0];
+                    // let bounds = new THREE.Box3().setFromObject(obj);
+                    // let size_x = bounds.max.x - bounds.min.x;
+                    // let size_y = bounds.max.y - bounds.min.y;
+                    // let size_z = bounds.max.z - bounds.min.z;
+                    // let max_size = Math.max(size_x, Math.max(size_y, size_z));
+                    // obj.receiveShadow = true;
                     
 
 
-                    obj.scale.set(1.0/max_size, 1.0/max_size, 1.0/max_size);
-                    // console.log(bounds);
-                    // console.log(max_size);
+                    // obj.scale.set(1.0/max_size, 1.0/max_size, 1.0/max_size);
+                    // // console.log(bounds);
+                    // // console.log(max_size);
 
-                    obj.traverse( (child : THREE.Object3D)=>{
-                        child.receiveShadow = true;
-                        child.castShadow = true;
-                        if(child instanceof THREE.Mesh){
-                            // BufferGeometryUtils.computeMikkTSpaceTangents(child.geometry, mikktspace, false);
-                            console.log("computing Tangents for " + child.name);
-                            if (child.material.normalMap) {
-                                child.geometry.computeVertexNormals();
-                                child.geometry.computeTangents();
-                                child.geometry.needsUpdate = true;
+                    // obj.traverse( (child : THREE.Object3D)=>{
+                    //     child.receiveShadow = true;
+                    //     child.castShadow = true;
+                    //     if(child instanceof THREE.Mesh){
+                    //         // BufferGeometryUtils.computeMikkTSpaceTangents(child.geometry, mikktspace, false);
+                    //         console.log("computing Tangents for " + child.name);
+                    //         if (child.material.normalMap) {
+                    //             child.geometry.computeVertexNormals();
+                    //             child.geometry.computeTangents();
+                    //             child.geometry.needsUpdate = true;
 
-                                (child.material.normalMap as THREE.Texture).wrapS = THREE.RepeatWrapping;
-                                (child.material.normalMap as THREE.Texture).wrapT = THREE.RepeatWrapping;
-                                (child.material.normalMap as THREE.Texture).repeat.set(1.0, -1.0);
-                                (child.material.normalMap as THREE.Texture).flipY = true;
-                                child.material.normalScale.set(1.0, -1.0);
-                                child.material.normalMap.colorSpace = THREE.SRGBColorSpace; // Ensure correct encoding
-                                child.material.normalMap.needsUpdate = true;
+                    //             (child.material.normalMap as THREE.Texture).wrapS = THREE.RepeatWrapping;
+                    //             (child.material.normalMap as THREE.Texture).wrapT = THREE.RepeatWrapping;
+                    //             (child.material.normalMap as THREE.Texture).repeat.set(2.0, 2.0);
+                    //             // (child.material.normalMap as THREE.Texture).flipY = true;
+                    //             child.material.normalScale.set(0.1, 0.1);
+                    //             child.material.normalMap.colorSpace = THREE.NoColorSpace; // Ensure correct encoding
+                    //             child.material.normalMap.needsUpdate = true;
 
-                                // child.material.normalMap.height = 0.01;
-                            }
-                            child.material.needsUpdate = true;
-                        }
-                    })
+                    //             // child.material.normalMap.height = 0.01;
+                    //         }
+                    //         child.material.needsUpdate = true;
+                    //     }
+                    // });
+
+                    obj = init_gltf_data(data);
+
 
                     scene.add(obj);
                     console.log(obj);
@@ -90,8 +135,11 @@ function dragOverHandler(ev : MouseEvent) {
     ev.preventDefault();
 }
 
-drop_zone.addEventListener("drop", dropHandler);
-drop_zone.addEventListener("dragover", dragOverHandler);
+if( drop_zone){
+
+    drop_zone.addEventListener("drop", dropHandler);
+    drop_zone.addEventListener("dragover", dragOverHandler);
+}
 
 clock = new THREE.Clock(true);
 renderer = new THREE.WebGLRenderer({ antialias : true, alpha : true});
@@ -142,12 +190,22 @@ controls = new OrbitControls(camera, renderer.domElement);
 controls.enabled = true;
 controls.autoRotate = false;
 controls.minDistance = 0.02;
-controls.maxDistance = 1.0;
+controls.maxDistance = 3.0;
 controls.minAzimuthAngle = Math.PI / 6.0;
 
 document.body.appendChild(renderer.domElement);
 console.log("GLTF Viewer");
 
+
+loader.load("export_1.glb", (data)=>{
+    console.log(data);
+    // obj = data.scene.children[0];
+    obj = init_gltf_data(data);
+    console.log(obj);
+
+    scene.add(obj);
+    
+});
 function animate()
 {
     requestAnimationFrame(animate);
@@ -159,10 +217,10 @@ function animate()
     let dt = clock.getDelta();
     controls.update(dt);
 
-    // if(obj){
+    if(obj){
 
-    //     obj.rotation.y += dt * 0.2;
-    // }
+        obj.rotation.y += dt * 0.6;
+    }
 
     renderer.render(scene, camera);
 
