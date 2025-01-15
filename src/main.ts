@@ -18,7 +18,7 @@ function dropHandler(e: DragEvent) {
         (e.target as HTMLDivElement).classList.remove("file-hover");
         (e.target as HTMLDivElement).style.visibility = ("hidden");
 
-        [...e.dataTransfer.files].forEach((file, i) => {
+        Array.from(e.dataTransfer.files).forEach((file, i) => {
 
             let reader = new FileReader();
             reader.onload = function (load_file_event) {
@@ -60,9 +60,9 @@ function dropHandler(e: DragEvent) {
 
 };
 
-function dragOverHandler(ev) {
+function dragOverHandler(ev : MouseEvent) {
     // console.log("File(s) in drop zone");
-    ev.target.classList.toggle("file-hover", true);
+    (ev.target as HTMLDivElement).classList.toggle("file-hover", true);
     // Prevent default behavior (Prevent file from being opened)
     ev.preventDefault();
 }

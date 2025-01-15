@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "vite build",
+    "watch": "vite build --watch",
     "dev": "vite",
     "upload": "node ./deploy/deployV2.mjs"
   },
