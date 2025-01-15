@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import * as mikktspace from 'three/examples/jsm/libs/mikktspace.module.js';
 const drop_zone = document.querySelector("#drop-zone") as HTMLDivElement;
 
 let scene : THREE.Scene;
@@ -32,6 +34,7 @@ function dropHandler(e: DragEvent) {
                     let size_z = bounds.max.z - bounds.min.z;
                     let max_size = Math.max(size_x, Math.max(size_y, size_z));
                     obj.receiveShadow = true;
+                    
 
 
                     obj.scale.set(1.0/max_size, 1.0/max_size, 1.0/max_size);
@@ -41,6 +44,26 @@ function dropHandler(e: DragEvent) {
                     obj.traverse( (child : THREE.Object3D)=>{
                         child.receiveShadow = true;
                         child.castShadow = true;
+                        if(child instanceof THREE.Mesh){
+                            // BufferGeometryUtils.computeMikkTSpaceTangents(child.geometry, mikktspace, false);
+                            console.log("computing Tangents for " + child.name);
+                            if (child.material.normalMap) {
+                                child.geometry.computeVertexNormals();
+                                child.geometry.computeTangents();
+                                child.geometry.needsUpdate = true;
+
+                                (child.material.normalMap as THREE.Texture).wrapS = THREE.RepeatWrapping;
+                                (child.material.normalMap as THREE.Texture).wrapT = THREE.RepeatWrapping;
+                                (child.material.normalMap as THREE.Texture).repeat.set(1.0, -1.0);
+                                (child.material.normalMap as THREE.Texture).flipY = true;
+                                child.material.normalScale.set(1.0, -1.0);
+                                child.material.normalMap.colorSpace = THREE.SRGBColorSpace; // Ensure correct encoding
+                                child.material.normalMap.needsUpdate = true;
+
+                                // child.material.normalMap.height = 0.01;
+                            }
+                            child.material.needsUpdate = true;
+                        }
                     })
 
                     scene.add(obj);
@@ -136,10 +159,10 @@ function animate()
     let dt = clock.getDelta();
     controls.update(dt);
 
-    if(obj){
+    // if(obj){
 
-        obj.rotation.y += dt * 0.2;
-    }
+    //     obj.rotation.y += dt * 0.2;
+    // }
 
     renderer.render(scene, camera);
 
