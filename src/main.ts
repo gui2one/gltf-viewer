@@ -34,20 +34,28 @@ function init_gltf_data(data : GLTF) : THREE.Object3D {
         child.receiveShadow = true;
         child.castShadow = true;
         if(child instanceof THREE.Mesh){
-            // BufferGeometryUtils.computeMikkTSpaceTangents(child.geometry, mikktspace, false);
-            console.log("computing Tangents for " + child.name);
+
             if (child.material.normalMap) {
-                child.geometry.computeVertexNormals();
-                child.geometry.computeTangents();
-                child.geometry.needsUpdate = true;
+                /*
+                    no need for this if I compute tangents directly in Houdini 
+                */
+                // child.geometry.computeVertexNormals();
+                // child.geometry.computeTangents();
+                // child.geometry.needsUpdate = true;
 
                 (child.material.normalMap as THREE.Texture).wrapS = THREE.RepeatWrapping;
                 (child.material.normalMap as THREE.Texture).wrapT = THREE.RepeatWrapping;
-                (child.material.normalMap as THREE.Texture).repeat.set(2.0, 2.0);
+                (child.material.normalMap as THREE.Texture).repeat.set(50.0, 50.0);
                 // (child.material.normalMap as THREE.Texture).flipY = true;
-                child.material.normalScale.set(0.1, 0.1);
-                child.material.normalMap.colorSpace = THREE.SRGBColorSpace; // Ensure correct encoding
-                child.material.normalMap.needsUpdate = true;
+                
+                let normal_mult = 0.05;
+                child.material.normalScale.set(normal_mult, normal_mult);
+                
+                let normalMap = child.material.normalMap as THREE.Texture;
+                normalMap.colorSpace = THREE.SRGBColorSpace; // Ensure correct encoding
+                normalMap.generateMipmaps = true;
+                normalMap.minFilter = THREE.LinearMipMapLinearFilter;
+                normalMap.needsUpdate = true;
 
                 // child.material.normalMap.height = 0.01;
             }
@@ -199,6 +207,8 @@ controls.enabled = true;
 controls.autoRotate = false;
 controls.minDistance = 0.02;
 controls.maxDistance = 3.0;
+
+camera.position.setZ(1.5);
 controls.minAzimuthAngle = Math.PI / 6.0;
 
 document.body.appendChild(renderer.domElement);
@@ -227,7 +237,7 @@ function animate()
 
     if(obj){
 
-        obj.rotation.y += dt * 0.6;
+        obj.rotation.y += dt * 0.4;
     }
 
     renderer.render(scene, camera);
