@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import {EquirectangularReflectionMapping } from 'three';
+import { RGBELoader } from "three/examples/jsm/Addons"
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
@@ -155,6 +157,12 @@ camera.position.set(0,0,5.0);
 scene = new THREE.Scene();
 
 loader = new GLTFLoader();
+
+new RGBELoader().load("HDR_110_Tunnel_Env.hdr", (texture)=>{
+    texture.mapping = EquirectangularReflectionMapping;
+    // this.scene.background = texture;
+    scene.environment = texture;
+})
 let light1 = new THREE.DirectionalLight();
 light1.position.setX(2);
 light1.position.setY(2);
@@ -184,7 +192,7 @@ light2.lookAt(new THREE.Vector3(0,0,0))
 scene.add(light2);
 
 let sky_light = new THREE.HemisphereLight();
-sky_light.intensity = 0.3;
+sky_light.intensity = 0.8;
 scene.add(sky_light);
 controls = new OrbitControls(camera, renderer.domElement);
 controls.enabled = true;

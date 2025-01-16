@@ -3,33 +3,31 @@ import env from "dotenv";
 import readline from "readline"
 env.config();
 
-const LOCAL_DIR = "./dist";
+const LOCAL_DIR = "./dist/gui2one/gltf-viewer";
 const DISTANT_DIR = "/httpdocs/gui2one/gltf-viewer";
 
 let do_delete = await confirmDelete(`About to delete content from ${DISTANT_DIR}\n are you sure ? (y/n) : `);
 
-if( do_delete){
+if (do_delete) {
 
     example();
 }
 
-function warning_colors(msg)
-{
+function warning_colors(msg) {
     return `\x1b[33m${msg}\x1b[0m`;
 }
-async function confirmDelete(msg)
-{
+async function confirmDelete(msg) {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
-    });    
-    return new Promise((resolve)=>{
-        rl.question(warning_colors(msg), ans=>{
+    });
+    return new Promise((resolve) => {
+        rl.question(warning_colors(msg), ans => {
             rl.close();
-            if( ans !== "y") {
+            if (ans !== "y") {
                 console.warn("aborting ... ")
                 resolve(false);
-            }else{
+            } else {
 
                 console.warn("removing distant directory content")
                 resolve(true);
@@ -52,7 +50,7 @@ async function example() {
         await client.clearWorkingDir();
         await client.uploadFromDir(LOCAL_DIR);
     }
-    catch(err) {
+    catch (err) {
         console.log(err)
     }
     client.close()

@@ -9,17 +9,9 @@ export default defineConfig({
       name: 'GltfViewer'
     //   fileName: (format) => `gltf-viewer.${format}.js`,
     },
-    outDir: './dist',
+    outDir: './dist/gui2one/gltf-viewer/',
     copyPublicDir: true,
-    // rollupOptions: {
-    //   // Externalize dependencies to reduce bundle size
-    //   external: ['three'],
-    //   output: {
-    //     globals: {
-    //       three: 'THREE',
-    //     },
-    //   },
-    // },
   },
   root: './',
+  base: '/gui2one/gltf-viewer/',
 });
