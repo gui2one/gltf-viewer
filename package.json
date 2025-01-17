@@ -6,7 +6,7 @@
   "scripts": {
     "build": "vite build",
     "watch": "vite build --watch",
-    "dev": "vite",
+    "dev": "vite --host",
     "upload": "node ./deploy/deployV2.mjs"
   },
   "keywords": [],

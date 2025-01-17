@@ -14,6 +14,10 @@ let controls : OrbitControls;
 let clock : THREE.Clock;
 let obj : THREE.Object3D;
 
+
+let rotation_speed = 0.4;
+let speed_mult = 1.0;
+let mouse_over = false;
 function init_gltf_data(data : GLTF) : THREE.Object3D {
 
     obj = data.scene.children[0];
@@ -214,7 +218,13 @@ controls.minAzimuthAngle = Math.PI / 6.0;
 document.body.appendChild(renderer.domElement);
 console.log("GLTF Viewer");
 
+renderer.domElement.addEventListener("mouseenter", (e)=>{
+    mouse_over = true;
+});
 
+renderer.domElement.addEventListener("mouseout", (e)=>{
+    mouse_over = false
+});
 loader.load("export_1.glb", (data)=>{
     console.log(data);
     // obj = data.scene.children[0];
@@ -234,10 +244,28 @@ function animate()
     
     let dt = clock.getDelta();
     controls.update(dt);
+    if( mouse_over){
+        if(speed_mult > 0.0){
 
+            speed_mult -= dt * speed_mult * 3.0;
+            // console.log(rotation_speed);
+        }else{
+            
+            speed_mult += dt * speed_mult * 3.0;
+        }
+    }else{
+        if(speed_mult < 1.0){
+
+            speed_mult += dt * 1.0;
+            // console.log(speed_mult);
+        }else{
+            
+            speed_mult -= dt * speed_mult;
+        }
+    }
     if(obj){
 
-        obj.rotation.y += dt * 0.4;
+        obj.rotation.y += dt * rotation_speed * speed_mult;
     }
 
     renderer.render(scene, camera);
