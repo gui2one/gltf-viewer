@@ -10,7 +10,9 @@ export interface GltfViewerOptions {
     camera_distance: number
     slow_rotation_speed: number,
     fast_rotation_speed: number,
-    gltf_url: string
+    gltf_url: string,
+    hdr_env_url: string,
+    show_env: boolean
 
 }
 
@@ -110,6 +112,10 @@ export function GLTFViewer(options: GltfViewerOptions): void {
     if (target_element === undefined) throw new Error("Target element not defined");
     if (options.gltf_url === undefined) throw new Error("GLTF url not defined");
 
+    if( options.hdr_env_url === undefined) {
+        options.hdr_env_url = "HDR_110_Tunnel_Env.hdr";
+    }
+    if(options.show_env === undefined) options.show_env = false;
     target_element.style.zIndex = "1";
     const drop_zone = document.querySelector("#drop-zone") as HTMLDivElement;
     const btn_reset = document.createElement("div");
@@ -127,6 +133,7 @@ export function GLTFViewer(options: GltfViewerOptions): void {
     let camera: THREE.PerspectiveCamera;
     let renderer: THREE.WebGLRenderer;
     let gltf_loader: GLTFLoader;
+    let env_loader: RGBELoader;
     let controls: OrbitControls;
     let clock: THREE.Clock;
     let obj: THREE.Object3D;
@@ -206,19 +213,19 @@ export function GLTFViewer(options: GltfViewerOptions): void {
         loading_message.style.opacity = "0";
         loading_message.style.transform = "translate(-50%,100%)";
     };
+
     gltf_loader = new GLTFLoader(loading_manager);
-
-
     gltf_loader.load(options.gltf_url, (data) => {
 
         obj = init_gltf_data(data);
         scene.add(obj);
 
     });
-    let env_loader = new RGBELoader(loading_manager);
-    env_loader.load("HDR_110_Tunnel_Env.hdr", (texture) => {
+    env_loader = new RGBELoader(loading_manager);
+    env_loader.load(options.hdr_env_url, (texture) => {
         texture.mapping = EquirectangularReflectionMapping;
         // scene.background = texture;
+        if( options.show_env ) scene.background = texture;
         scene.environment = texture;
     });
 

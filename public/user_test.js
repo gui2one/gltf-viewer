@@ -6,5 +6,7 @@ let options = {
     transparent: true,
     camera_distance: 1.0,
     gltf_url: "export_1.glb",
+    // hdr_env_url: "brown_photostudio_02_1k.hdr",
+    show_env: false
 };
 GLTFViewer(options);
