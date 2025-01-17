@@ -15,7 +15,10 @@ let clock : THREE.Clock;
 let obj : THREE.Object3D;
 
 
-let rotation_speed = 0.4;
+
+let rotation_min_speed = 0.15;
+let rotation_max_speed = 0.35;
+let rotation_speed = rotation_max_speed;
 let speed_mult = 1.0;
 let mouse_over = false;
 function init_gltf_data(data : GLTF) : THREE.Object3D {
@@ -245,27 +248,25 @@ function animate()
     let dt = clock.getDelta();
     controls.update(dt);
     if( mouse_over){
-        if(speed_mult > 0.0){
+        
 
-            speed_mult -= dt * speed_mult * 3.0;
+
+        if(rotation_speed > rotation_min_speed){
+
+            rotation_speed -= 0.01;
             // console.log(rotation_speed);
-        }else{
-            
-            speed_mult += dt * speed_mult * 3.0;
         }
     }else{
-        if(speed_mult < 1.0){
+        if(rotation_speed < rotation_max_speed){
 
-            speed_mult += dt * 1.0;
+            rotation_speed += 0.02;
             // console.log(speed_mult);
-        }else{
-            
-            speed_mult -= dt * speed_mult;
         }
     }
+    // console.log(rotation_speed);
     if(obj){
 
-        obj.rotation.y += dt * rotation_speed * speed_mult;
+        obj.rotation.y += dt * rotation_speed;
     }
 
     renderer.render(scene, camera);
