@@ -1,46 +1,78 @@
 import * as THREE from 'three';
-import {EquirectangularReflectionMapping } from 'three';
+import { EquirectangularReflectionMapping, Loader, LoadingManager } from 'three';
 import { RGBELoader } from "three/examples/jsm/Addons"
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import "../public/style.css";
+export interface GltfViewerOptions {
+    target_element: HTMLElement,
+    transparent: boolean,
+    camera_distance: number
+    slow_rotation_speed: number,
+    fast_rotation_speed: number,
+    gltf_url: string
 
-const drop_zone = document.querySelector("#drop-zone") as HTMLDivElement;
+}
 
-let scene : THREE.Scene;
-let camera : THREE.PerspectiveCamera;
-let renderer : THREE.WebGLRenderer;
-let loader : GLTFLoader;
-let controls : OrbitControls;
-let clock : THREE.Clock;
-let obj : THREE.Object3D;
+const create_lights = (): THREE.Object3D[] => {
+
+    let lights = [];
+    let light1 = new THREE.DirectionalLight("lightyellow");
+    light1.position.setX(2);
+    light1.position.setY(2);
+    light1.position.setZ(2);
+    light1.lookAt(new THREE.Vector3(0, 0, 0));
+    light1.intensity = 1.0;
+    light1.castShadow = true;
+    light1.shadow.mapSize.width = 1024;
+    light1.shadow.mapSize.height = 1024;
+    light1.shadow.camera.top = 1.0;
+    light1.shadow.camera.bottom = -1.0;
+    light1.shadow.camera.left = -1.0;
+    light1.shadow.camera.right = 1.0;
+    light1.shadow.camera.near = 0.1;
+    light1.shadow.camera.far = 5.0;
+    // light1.shadow.bias = 0.0001;
+    light1.shadow.normalBias = 0.0001;
+    light1.shadow.radius = 3.0;
+    lights.push(light1);
+
+    let light2 = new THREE.DirectionalLight("lightblue");
+    light2.position.setX(-1);
+    light2.position.setY(-1);
+    light2.position.setZ(-1);
+    light2.intensity = 0.6;
+
+    light2.lookAt(new THREE.Vector3(0, 0, 0))
+    lights.push(light2);
 
 
+    // let sky_light = new THREE.HemisphereLight();
+    // sky_light.intensity = 3.0;
+    // lights.push(sky_light);
 
-let rotation_min_speed = 0.15;
-let rotation_max_speed = 0.35;
-let rotation_speed = rotation_max_speed;
-let speed_mult = 1.0;
-let mouse_over = false;
-function init_gltf_data(data : GLTF) : THREE.Object3D {
+    return lights;
+};
+function init_gltf_data(data: GLTF): THREE.Object3D {
 
-    obj = data.scene.children[0];
+    let obj = data.scene.children[0];
     let bounds = new THREE.Box3().setFromObject(obj);
     let size_x = bounds.max.x - bounds.min.x;
     let size_y = bounds.max.y - bounds.min.y;
     let size_z = bounds.max.z - bounds.min.z;
     let max_size = Math.max(size_x, Math.max(size_y, size_z));
     obj.receiveShadow = true;
-    
 
 
-    obj.scale.set(1.0/max_size, 1.0/max_size, 1.0/max_size);
+
+    obj.scale.set(1.0 / max_size, 1.0 / max_size, 1.0 / max_size);
     // console.log(bounds);
     // console.log(max_size);
 
-    obj.traverse( (child : THREE.Object3D)=>{
+    obj.traverse((child: THREE.Object3D) => {
         child.receiveShadow = true;
         child.castShadow = true;
-        if(child instanceof THREE.Mesh){
+        if (child instanceof THREE.Mesh) {
 
             if (child.material.normalMap) {
                 /*
@@ -54,10 +86,10 @@ function init_gltf_data(data : GLTF) : THREE.Object3D {
                 (child.material.normalMap as THREE.Texture).wrapT = THREE.RepeatWrapping;
                 (child.material.normalMap as THREE.Texture).repeat.set(50.0, 50.0);
                 // (child.material.normalMap as THREE.Texture).flipY = true;
-                
+
                 let normal_mult = 0.05;
                 child.material.normalScale.set(normal_mult, normal_mult);
-                
+
                 let normalMap = child.material.normalMap as THREE.Texture;
                 normalMap.colorSpace = THREE.SRGBColorSpace; // Ensure correct encoding
                 normalMap.generateMipmaps = true;
@@ -71,206 +103,214 @@ function init_gltf_data(data : GLTF) : THREE.Object3D {
     });
     return obj;
 }
+export function GLTFViewer(options: GltfViewerOptions): void {
 
-function dropHandler(e: DragEvent) {
-    e.preventDefault();
+    let target_element = options.target_element;
 
-    if (e.dataTransfer) {
-        (e.target as HTMLDivElement).classList.remove("file-hover");
-        (e.target as HTMLDivElement).style.visibility = ("hidden");
+    if (target_element === undefined) throw new Error("Target element not defined");
+    if (options.gltf_url === undefined) throw new Error("GLTF url not defined");
 
-        Array.from(e.dataTransfer.files).forEach((file, i) => {
+    target_element.style.zIndex = "1";
+    const drop_zone = document.querySelector("#drop-zone") as HTMLDivElement;
+    const btn_reset = document.createElement("div");
+    btn_reset.id = "reset_camera";
+    btn_reset.innerHTML = "Reset";
+    target_element.appendChild(btn_reset);
 
-            let reader = new FileReader();
-            reader.onload = function (load_file_event) {
-                let buffer = load_file_event.target?.result as ArrayBuffer;
-                // console.log(buffer);
-                loader.parse(buffer, "/", (data)=>{
-                    // obj = data.scene.children[0];
-                    // let bounds = new THREE.Box3().setFromObject(obj);
-                    // let size_x = bounds.max.x - bounds.min.x;
-                    // let size_y = bounds.max.y - bounds.min.y;
-                    // let size_z = bounds.max.z - bounds.min.z;
-                    // let max_size = Math.max(size_x, Math.max(size_y, size_z));
-                    // obj.receiveShadow = true;
-                    
+    const loading_message = document.createElement("div");
+    loading_message.id = "loading";
+    loading_message.innerHTML = "Loading...";
+    target_element.appendChild(loading_message);
 
-
-                    // obj.scale.set(1.0/max_size, 1.0/max_size, 1.0/max_size);
-                    // // console.log(bounds);
-                    // // console.log(max_size);
-
-                    // obj.traverse( (child : THREE.Object3D)=>{
-                    //     child.receiveShadow = true;
-                    //     child.castShadow = true;
-                    //     if(child instanceof THREE.Mesh){
-                    //         // BufferGeometryUtils.computeMikkTSpaceTangents(child.geometry, mikktspace, false);
-                    //         console.log("computing Tangents for " + child.name);
-                    //         if (child.material.normalMap) {
-                    //             child.geometry.computeVertexNormals();
-                    //             child.geometry.computeTangents();
-                    //             child.geometry.needsUpdate = true;
-
-                    //             (child.material.normalMap as THREE.Texture).wrapS = THREE.RepeatWrapping;
-                    //             (child.material.normalMap as THREE.Texture).wrapT = THREE.RepeatWrapping;
-                    //             (child.material.normalMap as THREE.Texture).repeat.set(2.0, 2.0);
-                    //             // (child.material.normalMap as THREE.Texture).flipY = true;
-                    //             child.material.normalScale.set(0.1, 0.1);
-                    //             child.material.normalMap.colorSpace = THREE.NoColorSpace; // Ensure correct encoding
-                    //             child.material.normalMap.needsUpdate = true;
-
-                    //             // child.material.normalMap.height = 0.01;
-                    //         }
-                    //         child.material.needsUpdate = true;
-                    //     }
-                    // });
-
-                    obj = init_gltf_data(data);
+    let loading_manager: LoadingManager;
+    let scene: THREE.Scene;
+    let camera: THREE.PerspectiveCamera;
+    let renderer: THREE.WebGLRenderer;
+    let gltf_loader: GLTFLoader;
+    let controls: OrbitControls;
+    let clock: THREE.Clock;
+    let obj: THREE.Object3D;
 
 
-                    scene.add(obj);
-                    console.log(obj);
-                    
-                    controls.minDistance = 0.02;
-                    controls.maxDistance = 2.0;
 
-                    camera.position.setZ(2.0);
-                })
+    let rotation_min_speed = options.slow_rotation_speed ?? 0.1;
+    let rotation_max_speed = options.fast_rotation_speed ?? 0.35;
+    let rotation_speed = rotation_max_speed;
+    let mouse_over = false;
 
-            }
-            reader.readAsArrayBuffer(file);
 
+    function dropHandler(e: DragEvent) {
+        e.preventDefault();
+
+        if (e.dataTransfer) {
+            (e.target as HTMLDivElement).classList.remove("file-hover");
+            (e.target as HTMLDivElement).style.visibility = ("hidden");
+
+            Array.from(e.dataTransfer.files).forEach((file, i) => {
+
+                let reader = new FileReader();
+                reader.onload = function (load_file_event) {
+                    let buffer = load_file_event.target?.result as ArrayBuffer;
+
+                    gltf_loader.parse(buffer, "/", (data) => {
+
+                        obj = init_gltf_data(data);
+                        scene.add(obj);
+
+                        controls.minDistance = 0.02;
+                        controls.maxDistance = 2.0;
+
+                        camera.position.setZ(2.0);
+                    });
+                }
+                reader.readAsArrayBuffer(file);
+
+            })
+        }
+
+    };
+
+    function dragOverHandler(ev: MouseEvent) {
+        (ev.target as HTMLDivElement).classList.toggle("file-hover", true);
+        // Prevent default behavior (Prevent file from being opened)
+        ev.preventDefault();
+    }
+
+    if (drop_zone) {
+
+        drop_zone.addEventListener("drop", dropHandler);
+        drop_zone.addEventListener("dragover", dragOverHandler);
+    }
+
+    clock = new THREE.Clock(true);
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.domElement.classList.add("canvas");
+    renderer.domElement.style.zIndex = "-1";
+    renderer.shadowMap.enabled = true;
+    // renderer.shadowMap.type = THREE.PCFShadowMap;
+
+    camera = new THREE.PerspectiveCamera(45, 1.0, 0.01, 100.0);
+    camera.position.set(0, 0, 5.0);
+
+    scene = new THREE.Scene();
+
+    loading_manager = new LoadingManager();
+    loading_manager.onProgress = (url, loaded, total) => {
+
+        console.log(`${loaded}/${total} loaded`);
+
+    };
+    loading_manager.onLoad = () => {
+        loading_message.style.opacity = "0";
+        loading_message.style.transform = "translate(-50%,100%)";
+    };
+    gltf_loader = new GLTFLoader(loading_manager);
+
+
+    gltf_loader.load(options.gltf_url, (data) => {
+
+        obj = init_gltf_data(data);
+        scene.add(obj);
+
+    });
+    let env_loader = new RGBELoader(loading_manager);
+    env_loader.load("HDR_110_Tunnel_Env.hdr", (texture) => {
+        texture.mapping = EquirectangularReflectionMapping;
+        // scene.background = texture;
+        scene.environment = texture;
+    });
+
+
+    let lights = create_lights();
+    for (let light of lights) {
+        scene.add(light);
+    }
+
+
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enabled = true;
+    controls.autoRotate = false;
+    controls.minDistance = 0.02;
+    controls.maxDistance = 3.0;
+
+    camera.position.setZ(options.camera_distance);
+    let cam_pos = camera.position.clone();
+    controls.minAzimuthAngle = Math.PI / 6.0;
+
+    if (!target_element) {
+
+        document.body.appendChild(renderer.domElement);
+    } else {
+        target_element.appendChild(renderer.domElement);
+    }
+    console.log("@gui2one --- GLTF Viewer");
+
+    target_element.addEventListener("mouseover", (e) => {
+        mouse_over = true;
+    });
+
+    target_element.addEventListener("mouseout", (e) => {
+        mouse_over = false
+    });
+
+
+
+    const ResetControls = () => {
+        controls.reset();
+        camera.position.set(cam_pos.x, cam_pos.y, cam_pos.z);
+
+        if (obj) {
+            obj.rotation.y = 0.0;
+        }
+    }
+    window.addEventListener("keypress", (e) => {
+        if (e.key == "r") {
+            ResetControls();
+        }
+    });
+    if (btn_reset) {
+        btn_reset.addEventListener("click", (e) => {
+            ResetControls();
         })
     }
+    function animate() {
+        requestAnimationFrame(animate);
+        let rect = target_element.getBoundingClientRect();
+        camera.aspect = rect.width / rect.height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(rect.width, rect.height);
+        // renderer.setPixelRatio(camera.aspect);
+
+        let dt = clock.getDelta();
+        controls.update(dt);
+        if (mouse_over) {
+
+
+
+            if (rotation_speed > rotation_min_speed) {
+
+                rotation_speed -= 0.01;
+                // console.log(rotation_speed);
+            }
+        } else {
+            if (rotation_speed < rotation_max_speed) {
+
+                rotation_speed += 0.02;
+                // console.log(speed_mult);
+            }
+        }
+        // console.log(rotation_speed);
+        if (obj) {
+
+            obj.rotation.y += dt * rotation_speed;
+        }
+
+        renderer.render(scene, camera);
+
+    }
+
+    animate();
 
 };
-
-function dragOverHandler(ev : MouseEvent) {
-    // console.log("File(s) in drop zone");
-    (ev.target as HTMLDivElement).classList.toggle("file-hover", true);
-    // Prevent default behavior (Prevent file from being opened)
-    ev.preventDefault();
-}
-
-if( drop_zone){
-
-    drop_zone.addEventListener("drop", dropHandler);
-    drop_zone.addEventListener("dragover", dragOverHandler);
-}
-
-clock = new THREE.Clock(true);
-renderer = new THREE.WebGLRenderer({ antialias : true, alpha : true});
-
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.domElement.classList.add("canvas");
-renderer.shadowMap.enabled = true;
-// renderer.shadowMap.type = THREE.PCFShadowMap;
-
-camera = new THREE.PerspectiveCamera(45, 1.0, 0.01, 100.0);
-camera.position.set(0,0,5.0);
-
-scene = new THREE.Scene();
-
-loader = new GLTFLoader();
-
-new RGBELoader().load("HDR_110_Tunnel_Env.hdr", (texture)=>{
-    texture.mapping = EquirectangularReflectionMapping;
-    // this.scene.background = texture;
-    scene.environment = texture;
-})
-let light1 = new THREE.DirectionalLight();
-light1.position.setX(2);
-light1.position.setY(2);
-light1.position.setZ(2);
-light1.lookAt(new THREE.Vector3(0,0,0));
-light1.intensity = 1.0;
-light1.castShadow = true;
-light1.shadow.mapSize.width = 1024;
-light1.shadow.mapSize.height = 1024;
-light1.shadow.camera.top = 1.0;
-light1.shadow.camera.bottom = -1.0;
-light1.shadow.camera.left = -1.0;
-light1.shadow.camera.right = 1.0;
-light1.shadow.camera.near = 0.1;
-light1.shadow.camera.far = 5.0;
-// light1.shadow.bias = 0.0001;
-light1.shadow.normalBias = 0.0001;
-light1.shadow.radius = 3.0;
-scene.add(light1);
-let light2 = new THREE.DirectionalLight("lightblue");
-light2.position.setX(-1);
-light2.position.setY(-1);
-light2.position.setZ(-1);
-light2.intensity = 0.6;
-
-light2.lookAt(new THREE.Vector3(0,0,0))
-scene.add(light2);
-
-let sky_light = new THREE.HemisphereLight();
-sky_light.intensity = 0.8;
-scene.add(sky_light);
-controls = new OrbitControls(camera, renderer.domElement);
-controls.enabled = true;
-controls.autoRotate = false;
-controls.minDistance = 0.02;
-controls.maxDistance = 3.0;
-
-camera.position.setZ(1.5);
-controls.minAzimuthAngle = Math.PI / 6.0;
-
-document.body.appendChild(renderer.domElement);
-console.log("GLTF Viewer");
-
-renderer.domElement.addEventListener("mouseenter", (e)=>{
-    mouse_over = true;
-});
-
-renderer.domElement.addEventListener("mouseout", (e)=>{
-    mouse_over = false
-});
-loader.load("export_1.glb", (data)=>{
-    console.log(data);
-    // obj = data.scene.children[0];
-    obj = init_gltf_data(data);
-    console.log(obj);
-
-    scene.add(obj);
-    
-});
-function animate()
-{
-    requestAnimationFrame(animate);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    // renderer.setPixelRatio(camera.aspect);
-    
-    let dt = clock.getDelta();
-    controls.update(dt);
-    if( mouse_over){
-        
-
-
-        if(rotation_speed > rotation_min_speed){
-
-            rotation_speed -= 0.01;
-            // console.log(rotation_speed);
-        }
-    }else{
-        if(rotation_speed < rotation_max_speed){
-
-            rotation_speed += 0.02;
-            // console.log(speed_mult);
-        }
-    }
-    // console.log(rotation_speed);
-    if(obj){
-
-        obj.rotation.y += dt * rotation_speed;
-    }
-
-    renderer.render(scene, camera);
-
-}
-
-animate();
