@@ -111,13 +111,14 @@ function init_gltf_data(data: GLTF): THREE.Object3D {
 function smoothstep_camera(cam : THREE.PerspectiveCamera, controls : OrbitControls, start : THREE.Vector3, end : THREE.Vector3, target_start : THREE.Vector3, target_end : THREE.Vector3, duration : number, elapsed : number) {
     const progress = THREE.MathUtils.clamp(elapsed / duration, 0, 1); // Normalize time
   
-    cam.position.x = gui2one_lazy_easing(start.x, end.x, progress, 2.0);
-    cam.position.y = gui2one_lazy_easing(start.y, end.y, progress, 2.0);
-    cam.position.z = gui2one_lazy_easing(start.z, end.z, progress, 2.0);
+    let ease_expo = 2.0;
+    cam.position.x = gui2one_lazy_easing(start.x, end.x, progress, ease_expo);
+    cam.position.y = gui2one_lazy_easing(start.y, end.y, progress, ease_expo);
+    cam.position.z = gui2one_lazy_easing(start.z, end.z, progress, ease_expo);
 
-    controls.target.x = gui2one_lazy_easing(target_start.x, target_end.x, progress, 2.0);
-    controls.target.y = gui2one_lazy_easing(target_start.y, target_end.y, progress, 2.0);
-    controls.target.z = gui2one_lazy_easing(target_start.z, target_end.z, progress, 2.0);
+    controls.target.x = gui2one_lazy_easing(target_start.x, target_end.x, progress, ease_expo);
+    controls.target.y = gui2one_lazy_easing(target_start.y, target_end.y, progress, ease_expo);
+    controls.target.z = gui2one_lazy_easing(target_start.z, target_end.z, progress, ease_expo);
 }
 
 function create_loading_bar(target_element: HTMLElement) : HTMLDivElement {
@@ -339,17 +340,17 @@ export function GLTFViewer(options: GltfViewerOptions): void {
         controls.update(dt);
         if(cam_reset_in_progress) {
 
-            smoothstep_camera(camera, controls, cam_reset_start_pos, cam_pos, cam_reset_start_target_pos, new THREE.Vector3(0, 0, 0), cam_reset_duration, cam_reset_elapsed);
-
+            
             if(cam_reset_elapsed >= cam_reset_duration) {
                 cam_reset_in_progress = false;
                 cam_reset_elapsed = 0.0;
                 controls.enabled = true;
                 
             }else{
-                controls.enabled = false;
-                cam_reset_elapsed += dt * 1.0;
+                smoothstep_camera(camera, controls, cam_reset_start_pos, cam_pos, cam_reset_start_target_pos, new THREE.Vector3(0, 0, 0), cam_reset_duration, cam_reset_elapsed);
+                // controls.enabled = false;
             }
+            cam_reset_elapsed += 0.01;
         }else{
             
         }
