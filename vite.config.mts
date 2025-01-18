@@ -8,6 +8,7 @@ export default defineConfig({
       entry: './src/main.ts',
       name: 'GltfViewer',
     },
+    sourcemap: true,
     outDir: './dist/gui2one/gltf-viewer/',
     copyPublicDir: true,
     cssCodeSplit: true,

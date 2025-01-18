@@ -21,7 +21,7 @@ export function gui2one_lazy_easing(start : number, end : number, t : number, ex
 export function animateObject3D(object : Object3D, startPosition : Vector3, endPosition : Vector3, duration : number, easingExp : number, easingType = "ease-in-out", onComplete = ()=>{}) {
     const startTime = performance.now(); // Animation start time
 
-    function animate() {
+    function anim() {
         const elapsed = performance.now() - startTime; // Time since animation started
         const t = Math.min(elapsed / duration, 1); // Normalize time to [0, 1]
 
@@ -35,7 +35,7 @@ export function animateObject3D(object : Object3D, startPosition : Vector3, endP
 
         // Continue or end animation
         if (t < 1) {
-            requestAnimationFrame(animate); // Continue animating
+            requestAnimationFrame(anim); // Continue animating
         } else{
             if (onComplete !== null){
 
@@ -45,5 +45,50 @@ export function animateObject3D(object : Object3D, startPosition : Vector3, endP
             
         }
     }
-    animate(); // Start the animation
+    anim(); // Start the animation
 }
+function setNestedProperty(obj : any, path : string, value : number) {
+    const keys = path.split(".");
+    let target = obj;
+  
+    for (let i = 0; i < keys.length - 1; i++) {
+        target = target[keys[i]]; // Traverse to the correct nested object
+        if (!target) {
+            console.error(`Invalid property path: ${path}`);
+            return;
+        }
+    }
+  
+    const lastKey = keys[keys.length - 1];
+    target[lastKey] = value;
+}
+export function animateObjectProperty(object : Object3D, property : any, startValue : number, endValue : number, duration : number, easingExp : number, easingType = "ease-in-out", onComplete = ()=>{}) {
+    const startTime = performance.now(); // Animation start time
+
+    function anim() {
+        const elapsed = performance.now() - startTime; // Time since animation started
+        const t = Math.min(elapsed / duration, 1); // Normalize time to [0, 1]
+
+        // Easing interpolation
+        const value = gui2one_lazy_easing(startValue, endValue, t, easingExp, easingType);
+
+        // Update object property
+        setNestedProperty(object, property, value);
+
+        // Continue or end animation
+        if (t < 1) {
+            requestAnimationFrame(anim); // Continue animating
+        } else{
+            if (onComplete !== null){
+
+                onComplete(); // Call the completion callback, if any
+            }
+            return;
+        }
+
+       
+    }
+    anim();
+}
+
+

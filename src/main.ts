@@ -3,7 +3,7 @@ import { EquirectangularReflectionMapping, LoadingManager } from 'three';
 import { RGBELoader } from "three/examples/jsm/Addons"
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import {gui2one_lazy_easing, animateObject3D} from "./gui2one_lazy_easing.ts";
+import {gui2one_lazy_easing, animateObject3D, animateObjectProperty} from "./gui2one_lazy_easing.ts";
 import { isTouchDevice } from './utils.ts';
 import "../public/style.css";
 export interface GltfViewerOptions {
@@ -143,6 +143,14 @@ function create_loading_bar(target_element: HTMLElement) : HTMLDivElement {
 function loading_bar_update(bar : HTMLDivElement, progress : number) {
     bar.style.transform = `translateX(-50%) scaleX(${progress})`;
 }
+function reset_object_rotation(obj : THREE.Object3D) {
+    let cur_angle = (obj.rotation.y) % (2.0 * Math.PI);
+    let end_angle = 0.0;
+    
+    if(cur_angle > Math.PI) end_angle = Math.PI * 2.0; 
+    
+    animateObjectProperty(obj, "rotation.y", cur_angle, end_angle, 300, 2.0, "ease-out", ()=>{console.log("done rotating ?")});
+}
 export function GLTFViewer(options: GltfViewerOptions): void {
 
     let is_touch_device = isTouchDevice();
@@ -258,10 +266,14 @@ export function GLTFViewer(options: GltfViewerOptions): void {
         loading_bar_update(loading_bar, loaded / total);
     };
     loading_manager.onLoad = () => {
+        
 
         obj.position.set(0, -1, 0);
-        animateObject3D(obj, obj.position.clone(), new THREE.Vector3(0, 0, 0), 1000.0, 2.0, "ease-out", ()=>{console.log("done");
+        animateObject3D(obj, obj.position.clone(), new THREE.Vector3(0, 0, 0), 600.0, 2.0, "ease-out", ()=>{
         });
+
+
+ 
         setTimeout(() => {
             loading_bar.style.transform = "translateX(calc(-50% + 30px))";
             loading_bar.style.opacity = "0";
@@ -323,7 +335,7 @@ export function GLTFViewer(options: GltfViewerOptions): void {
         cam_reset_in_progress = true;
         cam_reset_start_pos = camera.position.clone();
         cam_reset_start_target_pos = controls.target.clone();
-
+        reset_object_rotation(obj);
     }
     window.addEventListener("keypress", (e) => {
         if (e.key == "r") {
@@ -338,6 +350,8 @@ export function GLTFViewer(options: GltfViewerOptions): void {
 
     
     function animate() {
+        
+        requestAnimationFrame(animate);
         let dt = clock.getDelta();
         controls.update(dt);
         if (cam_reset_in_progress) {
@@ -388,9 +402,7 @@ export function GLTFViewer(options: GltfViewerOptions): void {
 
         renderer.render(scene, camera);
 
-        requestAnimationFrame(animate);
     }
 
     animate();
-
 };
