@@ -16,7 +16,12 @@ export default defineConfig({
     copyPublicDir: true,
     cssCodeSplit: true,
     cssMinify: true,
-    
+  //   rollupOptions: {
+  //     output: {
+  //         entryFileNames: 'gltf-viewer.js',
+  //         chunkFileNames: '[name]-[hash].js',
+  //     }
+  // }
   },
   
   root: './',

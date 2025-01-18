@@ -94,7 +94,7 @@ canvas.canvas {
 }
 
 #gltf-container h1 {
-    pointer-events: none;
+    /* pointer-events: none; */
     font-weight: 900;
     mix-blend-mode: color-dodge;
     color: gray;
