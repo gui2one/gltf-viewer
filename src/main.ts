@@ -3,7 +3,7 @@ import { EquirectangularReflectionMapping, LoadingManager } from 'three';
 import { RGBELoader } from "three/examples/jsm/Addons"
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import gui2one_lazy_easing from "./gui2one_lazy_easing.ts";
+import {gui2one_lazy_easing, animateObject3D} from "./gui2one_lazy_easing.ts";
 import "../public/style.css";
 export interface GltfViewerOptions {
     target_element: HTMLElement,
@@ -251,9 +251,9 @@ export function GLTFViewer(options: GltfViewerOptions): void {
         loading_bar_update(loading_bar, loaded / total);
     };
     loading_manager.onLoad = () => {
-        // loading_message.style.opacity = "0";
-        // loading_message.style.transform = "translate(-50%,100%)";
-        
+
+        obj.position.set(0, -1, 0);
+        animateObject3D(obj, obj.position, new THREE.Vector3(0, 0, 0), 1000, 2.0, "ease-in-out");
         setTimeout(() => {
             loading_bar.style.transform = "translateX(calc(-50% + 30px))";
             loading_bar.style.opacity = "0";
@@ -332,21 +332,21 @@ export function GLTFViewer(options: GltfViewerOptions): void {
     function animate() {
         let dt = clock.getDelta();
         controls.update(dt);
-        if(cam_reset_in_progress) {
-
-            
-            if(cam_reset_elapsed >= cam_reset_duration) {
+        if (cam_reset_in_progress) {
+            if (cam_reset_elapsed >= cam_reset_duration) {
                 cam_reset_in_progress = false;
                 cam_reset_elapsed = 0.0;
                 controls.enabled = true;
-                
-            }else{
-                smoothstep_camera(camera, controls, cam_reset_start_pos, cam_pos, cam_reset_start_target_pos, new THREE.Vector3(0, 0, 0), cam_reset_duration, cam_reset_elapsed);
-                // controls.enabled = false;
+            } else {
+                smoothstep_camera(
+                    camera, controls,
+                    cam_reset_start_pos, cam_pos,
+                    cam_reset_start_target_pos, new THREE.Vector3(0, 0, 0),
+                    cam_reset_duration, cam_reset_elapsed
+                );
+                controls.update(); // Ensure controls sync after updating the target
             }
-            cam_reset_elapsed += 0.01;
-        }else{
-            
+            cam_reset_elapsed += dt; // Use delta time for consistent timing
         }
 
         let rect = target_element.getBoundingClientRect();
