@@ -62,7 +62,7 @@ function setNestedProperty(obj : any, path : string, value : number) {
     const lastKey = keys[keys.length - 1];
     target[lastKey] = value;
 }
-export function animateObjectProperty(object : Object3D, property : any, startValue : number, endValue : number, duration : number, easingExp : number, easingType = "ease-in-out", onComplete = ()=>{}) {
+export function animateObjectProperty(object : any, property : any, startValue : number, endValue : number, duration : number, easingExp : number, easingType = "ease-in-out", onComplete = ()=>{}) {
     const startTime = performance.now(); // Animation start time
 
     function anim() {
