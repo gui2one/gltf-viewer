@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { EquirectangularReflectionMapping, Loader, LoadingManager } from 'three';
+import { EquirectangularReflectionMapping, LoadingManager } from 'three';
 import { RGBELoader } from "three/examples/jsm/Addons"
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -105,6 +105,46 @@ function init_gltf_data(data: GLTF): THREE.Object3D {
     });
     return obj;
 }
+
+// Smoothstep utility function
+function smoothstep_camera(cam : THREE.PerspectiveCamera, controls : OrbitControls, start : THREE.Vector3, end : THREE.Vector3, target_start : THREE.Vector3, target_end : THREE.Vector3, duration : number, elapsed : number) {
+    const progress = THREE.MathUtils.clamp(elapsed / duration, 0, 1); // Normalize time
+    const t = THREE.MathUtils.smoothstep(progress, 0, 1); // Smooth interpolation factor
+  
+    // Interpolate position
+    cam.position.x = THREE.MathUtils.lerp(start.x, end.x, t);
+    cam.position.y = THREE.MathUtils.lerp(start.y, end.y, t);
+    cam.position.z = THREE.MathUtils.lerp(start.z, end.z, t);
+
+    controls.target.x = THREE.MathUtils.lerp(target_start.x, target_end.x, t);
+    controls.target.y = THREE.MathUtils.lerp(target_start.y, target_end.y, t);
+    controls.target.z = THREE.MathUtils.lerp(target_start.z, target_end.z, t);
+  
+    // camera.lookAt(0, 0, 0); // Optionally look at the center
+  }
+
+function create_loading_bar(target_element: HTMLElement) : HTMLDivElement {
+    let bar = document.createElement("div");
+    bar.id = "loading_bar";
+    bar.style.position = "absolute";
+
+    bar.style.opacity = "0.2";
+    bar.style.height = "3px";
+    bar.style.left = "50%";
+    bar.style.bottom = "30px";
+    bar.style.transform = "translateX(-50%) scaleX(0)";
+    bar.style.width = "200px";
+    bar.style.backgroundColor = "white";
+    bar.style.transformOrigin = "left center";
+    bar.style.transition = "all 0.1s ease-in-out";
+    target_element.appendChild(bar);
+
+    return bar;
+}
+function loading_bar_update(bar : HTMLDivElement, progress : number) {
+    // bar.style.width = `${(1.0-progress) * 100}%`;
+    bar.style.transform = `translateX(-50%) scaleX(${progress})`;
+}
 export function GLTFViewer(options: GltfViewerOptions): void {
 
     let target_element = options.target_element;
@@ -117,16 +157,14 @@ export function GLTFViewer(options: GltfViewerOptions): void {
     }
     if(options.show_env === undefined) options.show_env = false;
     target_element.style.zIndex = "1";
+
+    let loading_bar = create_loading_bar((target_element));
+
     const drop_zone = document.querySelector("#drop-zone") as HTMLDivElement;
     const btn_reset = document.createElement("div");
     btn_reset.id = "reset_camera";
     btn_reset.innerHTML = "Reset";
     target_element.appendChild(btn_reset);
-
-    const loading_message = document.createElement("div");
-    loading_message.id = "loading";
-    loading_message.innerHTML = "Loading...";
-    target_element.appendChild(loading_message);
 
     let loading_manager: LoadingManager;
     let scene: THREE.Scene;
@@ -138,6 +176,11 @@ export function GLTFViewer(options: GltfViewerOptions): void {
     let clock: THREE.Clock;
     let obj: THREE.Object3D;
 
+    let cam_reset_in_progress = false;
+    let cam_reset_elapsed = 0.0;
+    let cam_reset_duration = 0.5;
+    let cam_reset_start_pos = new THREE.Vector3(0.0, 0.0, 0.0);
+    let cam_reset_start_target_pos = new THREE.Vector3(0.0, 0.0, 0.0);
 
 
     let rotation_min_speed = options.slow_rotation_speed ?? 0.1;
@@ -207,11 +250,17 @@ export function GLTFViewer(options: GltfViewerOptions): void {
     loading_manager.onProgress = (url, loaded, total) => {
 
         console.log(`${loaded}/${total} loaded`);
-
+        loading_bar_update(loading_bar, loaded / total);
     };
     loading_manager.onLoad = () => {
-        loading_message.style.opacity = "0";
-        loading_message.style.transform = "translate(-50%,100%)";
+        // loading_message.style.opacity = "0";
+        // loading_message.style.transform = "translate(-50%,100%)";
+        
+        setTimeout(() => {
+            loading_bar.style.transform = "translateX(calc(-50% + 30px))";
+            loading_bar.style.opacity = "0";
+        }, 500);
+
     };
 
     gltf_loader = new GLTFLoader(loading_manager);
@@ -265,12 +314,10 @@ export function GLTFViewer(options: GltfViewerOptions): void {
 
 
     const ResetControls = () => {
-        controls.reset();
-        camera.position.set(cam_pos.x, cam_pos.y, cam_pos.z);
+        cam_reset_in_progress = true;
+        cam_reset_start_pos = camera.position.clone();
+        cam_reset_start_target_pos = controls.target.clone();
 
-        if (obj) {
-            obj.rotation.y = 0.0;
-        }
     }
     window.addEventListener("keypress", (e) => {
         if (e.key == "r") {
@@ -282,16 +329,35 @@ export function GLTFViewer(options: GltfViewerOptions): void {
             ResetControls();
         })
     }
+
+    
     function animate() {
-        requestAnimationFrame(animate);
+        let dt = clock.getDelta();
+        controls.update(dt);
+        if(cam_reset_in_progress) {
+
+            smoothstep_camera(camera, controls, cam_reset_start_pos, cam_pos, cam_reset_start_target_pos, new THREE.Vector3(0, 0, 0), cam_reset_duration, cam_reset_elapsed);
+
+            if(cam_reset_elapsed >= cam_reset_duration) {
+                cam_reset_in_progress = false;
+                cam_reset_elapsed = 0.0;
+                controls.enabled = true;
+                
+            }else{
+                controls.enabled = false;
+                cam_reset_elapsed += dt * 1.0;
+            }
+        }else{
+            
+        }
+
         let rect = target_element.getBoundingClientRect();
         camera.aspect = rect.width / rect.height;
         camera.updateProjectionMatrix();
         renderer.setSize(rect.width, rect.height);
         // renderer.setPixelRatio(camera.aspect);
 
-        let dt = clock.getDelta();
-        controls.update(dt);
+
         if (mouse_over) {
 
 
@@ -316,6 +382,7 @@ export function GLTFViewer(options: GltfViewerOptions): void {
 
         renderer.render(scene, camera);
 
+        requestAnimationFrame(animate);
     }
 
     animate();

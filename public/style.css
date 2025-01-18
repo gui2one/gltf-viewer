@@ -85,9 +85,6 @@ canvas.canvas {
 }
 
 #gltf-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     position: relative;
     min-height: 300px;
     max-height: 500px;
