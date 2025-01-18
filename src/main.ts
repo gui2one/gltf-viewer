@@ -4,7 +4,6 @@ import { RGBELoader } from "three/examples/jsm/Addons"
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import "../public/style.css";
-import 'vite/modulepreload-polyfill';
 export interface GltfViewerOptions {
     target_element: HTMLElement,
     transparent: boolean,
@@ -289,7 +288,7 @@ export function GLTFViewer(options: GltfViewerOptions): void {
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enabled = true;
     controls.autoRotate = false;
-    controls.minDistance = 0.02;
+    controls.minDistance = 0.6;
     controls.maxDistance = 3.0;
 
     camera.position.setZ(options.camera_distance);
