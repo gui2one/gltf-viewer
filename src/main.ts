@@ -145,12 +145,6 @@ function loading_bar_update(bar : HTMLDivElement, progress : number) {
 }
 export function GLTFViewer(options: GltfViewerOptions): void {
 
-    let steps = 10;
-    for(let i=0; i<steps; i++) {
-        let val = gui2one_lazy_easing(0, 10.0, i / (steps-1), 1.0);
-        console.log(val);
-        
-    }
     let target_element = options.target_element;
 
     if (target_element === undefined) throw new Error("Target element not defined");
