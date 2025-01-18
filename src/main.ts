@@ -4,6 +4,7 @@ import { RGBELoader } from "three/examples/jsm/Addons"
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import {gui2one_lazy_easing, animateObject3D} from "./gui2one_lazy_easing.ts";
+import { isTouchDevice } from './utils.ts';
 import "../public/style.css";
 export interface GltfViewerOptions {
     target_element: HTMLElement,
@@ -125,7 +126,7 @@ function create_loading_bar(target_element: HTMLElement) : HTMLDivElement {
     let bar = document.createElement("div");
     bar.id = "loading_bar";
     bar.style.position = "absolute";
-
+    bar.style.pointerEvents = "none";
     bar.style.opacity = "0.2";
     bar.style.height = "3px";
     bar.style.left = "50%";
@@ -140,11 +141,19 @@ function create_loading_bar(target_element: HTMLElement) : HTMLDivElement {
     return bar;
 }
 function loading_bar_update(bar : HTMLDivElement, progress : number) {
-    // bar.style.width = `${(1.0-progress) * 100}%`;
     bar.style.transform = `translateX(-50%) scaleX(${progress})`;
 }
 export function GLTFViewer(options: GltfViewerOptions): void {
 
+    let is_touch_device = isTouchDevice();
+    if(is_touch_device){
+        console.log("On a touch Device");
+        
+    }else{
+        console.log("Not on a touch Device");
+    }
+    
+    
     let target_element = options.target_element;
 
     if (target_element === undefined) throw new Error("Target element not defined");
@@ -246,14 +255,13 @@ export function GLTFViewer(options: GltfViewerOptions): void {
 
     loading_manager = new LoadingManager();
     loading_manager.onProgress = (url, loaded, total) => {
-
-        console.log(`${loaded}/${total} loaded`);
         loading_bar_update(loading_bar, loaded / total);
     };
     loading_manager.onLoad = () => {
 
         obj.position.set(0, -1, 0);
-        animateObject3D(obj, obj.position, new THREE.Vector3(0, 0, 0), 1000, 2.0, "ease-in-out");
+        animateObject3D(obj, obj.position.clone(), new THREE.Vector3(0, 0, 0), 1000.0, 2.0, "ease-out", ()=>{console.log("done");
+        });
         setTimeout(() => {
             loading_bar.style.transform = "translateX(calc(-50% + 30px))";
             loading_bar.style.opacity = "0";

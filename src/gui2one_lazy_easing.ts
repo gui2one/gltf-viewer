@@ -1,16 +1,16 @@
 import { Object3D, Vector3}from "three"
+
+
 function lerp(start : number, end : number, t : number) {
     return start + (end - start) * t;
 }
 
-
 export function gui2one_lazy_easing(start : number, end : number, t : number, exp : number, type: string = "ease-in-out") {
     let t2 = 0;
     if(type === "ease-in-out") {
-
         if( t < 0.5 ) t2 = (Math.pow(t, exp)* ( 1/(Math.pow(0.5, exp)) )) * 0.5 ;
         else t2 = ((1.0 - Math.pow(1.0-t, exp) * (1.0/(Math.pow(0.5, exp)))) * 0.5 + 0.5);
-    }else if(type === "ease-in") {
+    }else if(type === "ease-in") {        
         t2 = Math.pow(t, exp);
     }else if(type === "ease-out") {
         t2 = 1.0 - Math.pow(1.0-t, exp);
@@ -18,7 +18,7 @@ export function gui2one_lazy_easing(start : number, end : number, t : number, ex
     return lerp(start, end, t2);
 }
 
-export function animateObject3D(object : Object3D, startPosition : Vector3, endPosition : Vector3, duration : number, easingExp : number, easingType = "ease-in-out", onComplete = null) {
+export function animateObject3D(object : Object3D, startPosition : Vector3, endPosition : Vector3, duration : number, easingExp : number, easingType = "ease-in-out", onComplete = ()=>{}) {
     const startTime = performance.now(); // Animation start time
 
     function animate() {
@@ -35,16 +35,15 @@ export function animateObject3D(object : Object3D, startPosition : Vector3, endP
 
         // Continue or end animation
         if (t < 1) {
-            console.log("animate");
             requestAnimationFrame(animate); // Continue animating
         } else{
-            // onComplete(); // Call the completion callback, if any
-            console.log("out !!!");
+            if (onComplete !== null){
+
+                onComplete(); // Call the completion callback, if any
+            }
             return;
             
         }
     }
-    console.log("easing function");
-    
     animate(); // Start the animation
 }
