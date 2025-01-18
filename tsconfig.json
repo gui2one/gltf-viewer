@@ -9,6 +9,8 @@
         "declaration": true,
         "outDir": "dist",
         "skipLibCheck": true,
+        "allowImportingTsExtensions": true,
+        "emitDeclarationOnly": true,
         "lib": [
             "DOM",
             "ES6"

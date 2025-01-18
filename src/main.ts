@@ -3,6 +3,7 @@ import { EquirectangularReflectionMapping, LoadingManager } from 'three';
 import { RGBELoader } from "three/examples/jsm/Addons"
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import gui2one_lazy_easing from "./gui2one_lazy_easing.ts";
 import "../public/style.css";
 export interface GltfViewerOptions {
     target_element: HTMLElement,
@@ -109,19 +110,15 @@ function init_gltf_data(data: GLTF): THREE.Object3D {
 // Smoothstep utility function
 function smoothstep_camera(cam : THREE.PerspectiveCamera, controls : OrbitControls, start : THREE.Vector3, end : THREE.Vector3, target_start : THREE.Vector3, target_end : THREE.Vector3, duration : number, elapsed : number) {
     const progress = THREE.MathUtils.clamp(elapsed / duration, 0, 1); // Normalize time
-    const t = THREE.MathUtils.smoothstep(progress, 0, 1); // Smooth interpolation factor
   
-    // Interpolate position
-    cam.position.x = THREE.MathUtils.lerp(start.x, end.x, t);
-    cam.position.y = THREE.MathUtils.lerp(start.y, end.y, t);
-    cam.position.z = THREE.MathUtils.lerp(start.z, end.z, t);
+    cam.position.x = gui2one_lazy_easing(start.x, end.x, progress, 2.0);
+    cam.position.y = gui2one_lazy_easing(start.y, end.y, progress, 2.0);
+    cam.position.z = gui2one_lazy_easing(start.z, end.z, progress, 2.0);
 
-    controls.target.x = THREE.MathUtils.lerp(target_start.x, target_end.x, t);
-    controls.target.y = THREE.MathUtils.lerp(target_start.y, target_end.y, t);
-    controls.target.z = THREE.MathUtils.lerp(target_start.z, target_end.z, t);
-  
-    // camera.lookAt(0, 0, 0); // Optionally look at the center
-  }
+    controls.target.x = gui2one_lazy_easing(target_start.x, target_end.x, progress, 2.0);
+    controls.target.y = gui2one_lazy_easing(target_start.y, target_end.y, progress, 2.0);
+    controls.target.z = gui2one_lazy_easing(target_start.z, target_end.z, progress, 2.0);
+}
 
 function create_loading_bar(target_element: HTMLElement) : HTMLDivElement {
     let bar = document.createElement("div");
@@ -147,6 +144,12 @@ function loading_bar_update(bar : HTMLDivElement, progress : number) {
 }
 export function GLTFViewer(options: GltfViewerOptions): void {
 
+    let steps = 10;
+    for(let i=0; i<steps; i++) {
+        let val = gui2one_lazy_easing(0, 10.0, i / (steps-1), 1.0);
+        console.log(val);
+        
+    }
     let target_element = options.target_element;
 
     if (target_element === undefined) throw new Error("Target element not defined");
