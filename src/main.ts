@@ -69,7 +69,14 @@ function init_gltf_data(data: GLTF): THREE.Object3D {
   obj.traverse((child: THREE.Object3D) => {
     child.receiveShadow = true;
     child.castShadow = true;
+    console.log(child.name);
     if (child instanceof THREE.Mesh) {
+      if (child.name == "stitches") {
+        console.log(child.material);
+        child.material.alphaMap = child.material.map.clone();
+        child.material.map = null;
+        child.material.transparent = true;
+      }
       if (child.material.normalMap) {
         /*
           no need for this if I compute tangents directly in Houdini 
@@ -250,7 +257,7 @@ export function GLTFViewer(options: GltfViewerOptions): void {
   env_loader = new RGBELoader(loading_manager);
   env_loader.load(options.hdr_env_url, (texture) => {
     texture.mapping = EquirectangularReflectionMapping;
-    // scene.background = texture;
+
     if (options.show_env) scene.background = texture;
     scene.environment = texture;
   });
@@ -287,15 +294,14 @@ export function GLTFViewer(options: GltfViewerOptions): void {
 
   const ResetControls = () => {
     let duration = 500.0;
-    let exp = 2.5;
+    let exp = 3.2;
     let ease_type = "ease-in-out";
     animateObject3D(camera, camera.position.clone(), cam_pos, duration, exp, ease_type);
     animateObjectProperty(controls, "target.x", controls.target.x, 0, duration, exp, ease_type);
     animateObjectProperty(controls, "target.y", controls.target.y, 0, duration, exp, ease_type);
     animateObjectProperty(controls, "target.z", controls.target.z, 0, duration, exp, ease_type);
-    setTimeout(() => {
-      reset_object_rotation(obj, duration, exp);
-    }, duration - 100);
+
+    reset_object_rotation(obj, duration, exp);
   };
   window.addEventListener("keypress", (e) => {
     if (e.key == "r") {
