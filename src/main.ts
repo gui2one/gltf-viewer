@@ -71,10 +71,11 @@ function init_gltf_data(data: GLTF): THREE.Object3D {
     child.castShadow = true;
     console.log(child.name);
     if (child instanceof THREE.Mesh) {
+      child.material.side = THREE.DoubleSide;
       if (child.name == "stitches") {
         console.log(child.material);
         if( child.material.map ){
-          
+          child.castShadow = false;
           child.material.alphaMap = child.material.map.clone();
           child.material.map = null;
           child.material.transparent = true;
