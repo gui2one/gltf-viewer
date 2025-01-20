@@ -4,7 +4,7 @@ import { RGBELoader } from "three/examples/jsm/Addons";
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { animateObject3D, animateObjectProperty } from "./gui2one_lazy_easing.ts";
-import { isTouchDevice } from "./utils.ts";
+import { isTouchDevice, hasWebGL } from "./utils.ts";
 import "../public/style.css";
 
 export interface GltfViewerOptions {
@@ -16,6 +16,7 @@ export interface GltfViewerOptions {
   gltf_url: string;
   hdr_env_url: string;
   show_env: boolean;
+  fallback_image: string;
 }
 
 const create_lights = (): THREE.Object3D[] => {
@@ -152,6 +153,24 @@ export function GLTFViewer(options: GltfViewerOptions): void {
   let target_element = options.target_element;
 
   if (target_element === undefined) throw new Error("Target element not defined");
+
+  if (!hasWebGL()) {
+    console.log("WebGL not supported");
+    let img_container = document.createElement("div");
+    img_container.style.position = "absolute";
+    img_container.style.width = "100%";
+    img_container.style.height = "100%";
+
+    let img = document.createElement("img");
+    img.src = options.fallback_image ?? "fallback.png";
+    // img.style.display = "block";
+    img.style.width = "100%";
+    img.style.height = "100%";
+    // img.style.objectFit = "cover";
+    img_container.appendChild(img);
+    target_element.prepend(img_container);
+    return;
+  }
   if (options.gltf_url === undefined) throw new Error("GLTF url not defined");
 
   if (options.hdr_env_url === undefined) {

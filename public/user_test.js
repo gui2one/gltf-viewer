@@ -7,6 +7,7 @@ let options = {
     camera_distance: 1.5,
     gltf_url: "export_1.glb",
     // hdr_env_url: "brown_photostudio_02_1k.hdr",
-    show_env: false
+    show_env: false,
+    fallback_image: "fallback.webp",
 };
 GLTFViewer(options);
