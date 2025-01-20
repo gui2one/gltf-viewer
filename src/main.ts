@@ -73,9 +73,12 @@ function init_gltf_data(data: GLTF): THREE.Object3D {
     if (child instanceof THREE.Mesh) {
       if (child.name == "stitches") {
         console.log(child.material);
-        child.material.alphaMap = child.material.map.clone();
-        child.material.map = null;
-        child.material.transparent = true;
+        if( child.material.map ){
+          
+          child.material.alphaMap = child.material.map.clone();
+          child.material.map = null;
+          child.material.transparent = true;
+        }
       }
       if (child.material.normalMap) {
         /*
